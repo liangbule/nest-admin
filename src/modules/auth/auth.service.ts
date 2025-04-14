@@ -1,44 +1,103 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UsersService } from '../users/users.service';
+import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
+/**
+ * 认证服务
+ * 负责处理用户登录、注册和令牌验证等功能
+ * 实现用户凭据验证、JWT令牌生成和验证
+ * 与用户服务交互以验证用户信息
+ */
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
-    private usersService: UsersService,
+    private userService: UserService,
     private jwtService: JwtService,
   ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
-    const user = await this.usersService.findOneByUsername(username);
-    if (user && (await bcrypt.compare(password, user.password))) {
-      const { password, ...result } = user;
-      return result;
+    try {
+      const user = await this.userService.findByUsername(username);
+      if (user && (await bcrypt.compare(password, user.password))) {
+        const { password, ...result } = user;
+        return result;
+      }
+      return null;
+    } catch (error) {
+      this.logger.error(`用户验证失败: ${error.message}`, error.stack);
+      throw error;
     }
-    return null;
   }
 
-  async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.username, loginDto.password);
-    if (!user) {
-      throw new UnauthorizedException('用户名或密码错误');
-    }
+  async login(user: any) {
+    try {
+      this.logger.log(`用户登录尝试: ${user.username}`);
+      const payload = { username: user.username, sub: user.id };
 
-    const payload = {
-      username: user.username,
-      sub: user.id,
-      roles: user.roles.map((role) => role.name),
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
+      // 提取用户的基本信息和角色，避免循环引用
+      const userResponse = {
         id: user.id,
         username: user.username,
-        roles: user.roles.map((role) => role.name),
-      },
-    };
+        email: user.email,
+        roles: user.roles
+          ? user.roles.map((role) => ({
+              id: role.id,
+              name: role.name,
+              description: role.description,
+            }))
+          : [],
+      };
+
+      return {
+        access_token: this.jwtService.sign(payload),
+        user: userResponse,
+      };
+    } catch (error) {
+      this.logger.error(`登录失败: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async register(registerDto: RegisterDto) {
+    try {
+      // 创建新用户
+      const user = await this.userService.create({
+        ...registerDto,
+        roleIds: registerDto.roleIds || [], // 使用传入的角色ID列表，如果没有则默认为空数组
+      });
+
+      this.logger.log(`用户注册成功: ${user.username}`);
+
+      // 生成 JWT token
+      const payload = { username: user.username, sub: user.id };
+      const access_token = this.jwtService.sign(payload);
+
+      // 提取用户的基本信息和角色，避免循环引用
+      const userResponse = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        roles: user.roles
+          ? user.roles.map((role) => ({
+              id: role.id,
+              name: role.name,
+              description: role.description,
+            }))
+          : [],
+      };
+
+      return {
+        access_token,
+        user: userResponse,
+      };
+    } catch (error) {
+      this.logger.error(`注册失败: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 }

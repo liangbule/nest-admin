@@ -1,6 +1,12 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
+/**
+ * 日志中间件
+ * 记录应用程序的HTTP请求和响应信息
+ * 提供请求跟踪和调试支持
+ * 可配置不同级别的日志记录详细程度
+ */
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   private logger = new Logger('HTTP');
