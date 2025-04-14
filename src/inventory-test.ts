@@ -16,8 +16,8 @@ async function testInventoryApi() {
   try {
     console.log('1. 登录获取认证token...');
     const loginResponse = await axios.post(`${baseUrl}/auth/login`, {
-      username: 'testuser11',
-      password: '123456'
+      username: 'testuser',
+      password: 'test123'
     });
     
     if (loginResponse.data && loginResponse.data.data && loginResponse.data.data.access_token) {
@@ -170,10 +170,12 @@ async function testInventoryApi() {
       const inRecordData = {
         inventoryId: testInventoryId,
         quantity: 50,
-        unitPrice: 10.5,
+        type: 'purchase',
+        unitPrice: '10.00',
         supplier: '牙刷批发商',
         batchNumber: 'LOT-' + Math.floor(Math.random() * 10000),
-        notes: '自动化测试创建的入库记录'
+        operator: '库管员小王',
+        remarks: '自动化测试创建的入库记录'
       };
       
       console.log('发送的入库数据:', JSON.stringify(inRecordData));
@@ -181,6 +183,7 @@ async function testInventoryApi() {
       
       if (inRecordResponse.data && inRecordResponse.data.data && inRecordResponse.data.data.success) {
         console.log('✅ 成功创建入库记录');
+        console.log(`   入库记录ID: ${inRecordResponse.data.data.data.id}`);
       } else {
         console.log('❌ 创建入库记录失败');
         console.log('返回内容:', JSON.stringify(inRecordResponse.data, null, 2));
@@ -230,9 +233,9 @@ async function testInventoryApi() {
       const outRecordData = {
         inventoryId: testInventoryId,
         quantity: 5,
-        type: 'use',  // 使用类型：use-使用, waste-报废, return-退货
-        receiver: '张医生',
-        notes: '自动化测试创建的出库记录'
+        type: 'use',
+        operator: '牙医张医生',
+        remarks: '自动化测试创建的出库记录'
       };
       
       console.log('发送的出库数据:', JSON.stringify(outRecordData));
@@ -240,6 +243,7 @@ async function testInventoryApi() {
       
       if (outRecordResponse.data && outRecordResponse.data.data && outRecordResponse.data.data.success) {
         console.log('✅ 成功创建出库记录');
+        console.log(`   出库记录ID: ${outRecordResponse.data.data.data.id}`);
       } else {
         console.log('❌ 创建出库记录失败');
         console.log('返回内容:', JSON.stringify(outRecordResponse.data, null, 2));
@@ -283,14 +287,14 @@ async function testInventoryApi() {
   // 步骤10: 获取入库记录列表
   try {
     console.log('\n10. 获取入库记录列表...');
-    const inListResponse = await axios.get(`${baseUrl}/dental/inventory/in-records`, { headers });
+    const inRecordsResponse = await axios.get(`${baseUrl}/dental/inventory/records/in/list`, { headers });
     
-    if (inListResponse.data && inListResponse.data.data && inListResponse.data.data.success) {
-      const recordCount = inListResponse.data.data.data?.items?.length || 0;
-      console.log(`✅ 成功获取入库记录列表，共 ${recordCount} 条记录`);
+    if (inRecordsResponse.data && inRecordsResponse.data.data && inRecordsResponse.data.data.success) {
+      const itemCount = inRecordsResponse.data.data.data?.items?.length || 0;
+      console.log(`✅ 成功获取入库记录列表，共 ${itemCount} 条记录`);
     } else {
       console.log('❌ 获取入库记录列表失败');
-      console.log('返回内容:', JSON.stringify(inListResponse.data, null, 2));
+      console.log('返回内容:', JSON.stringify(inRecordsResponse.data, null, 2));
     }
   } catch (error) {
     console.log('❌ 获取入库记录列表接口测试失败');
@@ -304,14 +308,14 @@ async function testInventoryApi() {
   // 步骤11: 获取出库记录列表
   try {
     console.log('\n11. 获取出库记录列表...');
-    const outListResponse = await axios.get(`${baseUrl}/dental/inventory/out-records`, { headers });
+    const outRecordsResponse = await axios.get(`${baseUrl}/dental/inventory/records/out/list`, { headers });
     
-    if (outListResponse.data && outListResponse.data.data && outListResponse.data.data.success) {
-      const recordCount = outListResponse.data.data.data?.items?.length || 0;
-      console.log(`✅ 成功获取出库记录列表，共 ${recordCount} 条记录`);
+    if (outRecordsResponse.data && outRecordsResponse.data.data && outRecordsResponse.data.data.success) {
+      const itemCount = outRecordsResponse.data.data.data?.items?.length || 0;
+      console.log(`✅ 成功获取出库记录列表，共 ${itemCount} 条记录`);
     } else {
       console.log('❌ 获取出库记录列表失败');
-      console.log('返回内容:', JSON.stringify(outListResponse.data, null, 2));
+      console.log('返回内容:', JSON.stringify(outRecordsResponse.data, null, 2));
     }
   } catch (error) {
     console.log('❌ 获取出库记录列表接口测试失败');

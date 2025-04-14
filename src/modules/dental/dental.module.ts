@@ -257,16 +257,16 @@ export class DentalDatabaseInitService implements OnModuleInit {
  */
 @Module({
   imports: [
-    AuthModule,
     TypeOrmModule.forFeature([
-      Patient, 
-      Appointment, 
-      MedicalRecord, 
+      Patient,
+      Appointment,
+      MedicalRecord,
       Followup,
       Inventory,
       InventoryInRecord,
-      InventoryOutRecord
+      InventoryOutRecord,
     ]),
+    AuthModule,
   ],
   controllers: [DentalController, InventoryController],
   providers: [DentalService, DentalDatabaseInitService],

@@ -58,7 +58,7 @@ export class Inventory {
   manufacturer: string;
 
   @ApiProperty({ description: '单价参考值', type: 'number', required: false })
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true, name: 'reference_price' })
   referencePrice: number;
 
   @ApiProperty({ description: '备注', required: false })
@@ -70,15 +70,15 @@ export class Inventory {
   status: string;
 
   @ApiProperty({ description: '创建时间' })
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @ApiProperty({ description: '更新时间' })
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   @ApiProperty({ description: '删除时间', required: false })
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'delete_time' })
   deleteTime: Date;
 
   // 关联关系

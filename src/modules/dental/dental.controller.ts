@@ -23,22 +23,20 @@ import { CreatePatientDto, UpdatePatientDto, PatientQueryDto } from './dto/patie
 import { CreateAppointmentDto, UpdateAppointmentDto, AppointmentQueryDto } from './dto/appointment.dto';
 import { CreateMedicalRecordDto, UpdateMedicalRecordDto, MedicalRecordQueryDto } from './dto/medical-record.dto';
 import { CreateFollowupDto, UpdateFollowupDto, FollowupQueryDto } from './dto/followup.dto';
-import { CreateInventoryDto, UpdateInventoryDto, InventoryQueryDto } from './dto/inventory.dto';
-import { CreateInventoryInRecordDto, InventoryInRecordQueryDto } from './dto/inventory-in-record.dto';
-import { CreateInventoryOutRecordDto, InventoryOutRecordQueryDto } from './dto/inventory-out-record.dto';
 
 /**
- * 牙科诊所管理API控制器
+ * 牙科诊所管理控制器
  */
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@ApiTags('牙科诊所')
 @Controller('dental')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class DentalController {
   constructor(private readonly dentalService: DentalService) {}
 
   /* 患者管理API */
   @ApiTags('牙科诊所管理', '患者管理')
-  @ApiOperation({ summary: '获取患者列表' })
+  @ApiOperation({ summary: '获取患者列表', description: '获取患者列表，支持分页、筛选' })
   @ApiResponse({ status: 200, description: '成功返回患者列表' })
   @Get('patients')
   async getPatients(@Query() query: PatientQueryDto) {
@@ -46,16 +44,16 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '患者管理')
-  @ApiOperation({ summary: '获取患者详情' })
-  @ApiParam({ name: 'id', description: '患者ID' })
-  @ApiResponse({ status: 200, description: '成功返回患者详情' })
+  @ApiOperation({ summary: '获取患者详情', description: '根据ID获取患者详情' })
+  @ApiResponse({ status: 200, description: '成功返回患者信息' })
+  @ApiResponse({ status: 404, description: '患者不存在' })
   @Get('patients/:id')
   async getPatient(@Param('id') id: string) {
     return this.dentalService.getPatient(id);
   }
 
   @ApiTags('牙科诊所管理', '患者管理')
-  @ApiOperation({ summary: '创建新患者' })
+  @ApiOperation({ summary: '创建新患者', description: '创建新患者记录' })
   @ApiResponse({ status: 201, description: '成功创建患者' })
   @Post('patients')
   async createPatient(@Body() patientData: CreatePatientDto) {
@@ -63,18 +61,18 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '患者管理')
-  @ApiOperation({ summary: '更新患者信息' })
-  @ApiParam({ name: 'id', description: '患者ID' })
+  @ApiOperation({ summary: '更新患者信息', description: '根据ID更新患者信息' })
   @ApiResponse({ status: 200, description: '成功更新患者信息' })
+  @ApiResponse({ status: 404, description: '患者不存在' })
   @Put('patients/:id')
   async updatePatient(@Param('id') id: string, @Body() patientData: UpdatePatientDto) {
     return this.dentalService.updatePatient(id, patientData);
   }
 
   @ApiTags('牙科诊所管理', '患者管理')
-  @ApiOperation({ summary: '删除患者' })
-  @ApiParam({ name: 'id', description: '患者ID' })
+  @ApiOperation({ summary: '删除患者', description: '根据ID删除患者' })
   @ApiResponse({ status: 200, description: '成功删除患者' })
+  @ApiResponse({ status: 404, description: '患者不存在' })
   @Delete('patients/:id')
   async deletePatient(@Param('id') id: string) {
     return this.dentalService.deletePatient(id);
@@ -82,7 +80,7 @@ export class DentalController {
 
   /* 预约管理API */
   @ApiTags('牙科诊所管理', '预约管理')
-  @ApiOperation({ summary: '获取预约列表' })
+  @ApiOperation({ summary: '获取预约列表', description: '获取预约列表，支持分页、筛选' })
   @ApiResponse({ status: 200, description: '成功返回预约列表' })
   @Get('appointments')
   async getAppointments(@Query() query: AppointmentQueryDto) {
@@ -90,16 +88,15 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '预约管理')
-  @ApiOperation({ summary: '获取指定日期的预约' })
-  @ApiParam({ name: 'date', description: '日期 (YYYY-MM-DD)' })
-  @ApiResponse({ status: 200, description: '成功返回预约列表' })
+  @ApiOperation({ summary: '获取某日预约', description: '获取指定日期的预约' })
+  @ApiResponse({ status: 200, description: '成功返回指定日期的预约列表' })
   @Get('appointments/date/:date')
   async getAppointmentsByDate(@Param('date') date: string) {
     return this.dentalService.getAppointmentsByDate(date);
   }
 
   @ApiTags('牙科诊所管理', '预约管理')
-  @ApiOperation({ summary: '创建新预约' })
+  @ApiOperation({ summary: '创建新预约', description: '创建新预约' })
   @ApiResponse({ status: 201, description: '成功创建预约' })
   @Post('appointments')
   async createAppointment(@Body() appointmentData: CreateAppointmentDto) {
@@ -107,21 +104,18 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '预约管理')
-  @ApiOperation({ summary: '更新预约信息' })
-  @ApiParam({ name: 'id', description: '预约ID' })
+  @ApiOperation({ summary: '更新预约', description: '根据ID更新预约信息' })
   @ApiResponse({ status: 200, description: '成功更新预约信息' })
+  @ApiResponse({ status: 404, description: '预约不存在' })
   @Put('appointments/:id')
-  async updateAppointment(
-    @Param('id') id: string,
-    @Body() appointmentData: UpdateAppointmentDto,
-  ) {
+  async updateAppointment(@Param('id') id: string, @Body() appointmentData: UpdateAppointmentDto) {
     return this.dentalService.updateAppointment(id, appointmentData);
   }
 
   @ApiTags('牙科诊所管理', '预约管理')
-  @ApiOperation({ summary: '取消/删除预约' })
-  @ApiParam({ name: 'id', description: '预约ID' })
-  @ApiResponse({ status: 200, description: '成功取消预约' })
+  @ApiOperation({ summary: '删除预约', description: '根据ID删除预约' })
+  @ApiResponse({ status: 200, description: '成功删除预约' })
+  @ApiResponse({ status: 404, description: '预约不存在' })
   @Delete('appointments/:id')
   async deleteAppointment(@Param('id') id: string) {
     return this.dentalService.deleteAppointment(id);
@@ -129,8 +123,7 @@ export class DentalController {
 
   /* 病历记录API */
   @ApiTags('牙科诊所管理', '病历管理')
-  @ApiOperation({ summary: '获取患者病历列表' })
-  @ApiParam({ name: 'patientId', description: '患者ID' })
+  @ApiOperation({ summary: '获取患者病历', description: '获取指定患者的病历记录，支持分页' })
   @ApiResponse({ status: 200, description: '成功返回病历列表' })
   @Get('patients/:patientId/records')
   async getMedicalRecords(
@@ -141,8 +134,7 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '病历管理')
-  @ApiOperation({ summary: '创建患者病历' })
-  @ApiParam({ name: 'patientId', description: '患者ID' })
+  @ApiOperation({ summary: '创建病历', description: '为指定患者创建病历记录' })
   @ApiResponse({ status: 201, description: '成功创建病历' })
   @Post('patients/:patientId/records')
   async createMedicalRecord(
@@ -153,18 +145,18 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '病历管理')
-  @ApiOperation({ summary: '更新病历信息' })
-  @ApiParam({ name: 'id', description: '病历ID' })
+  @ApiOperation({ summary: '更新病历', description: '根据ID更新病历信息' })
   @ApiResponse({ status: 200, description: '成功更新病历信息' })
+  @ApiResponse({ status: 404, description: '病历不存在' })
   @Put('records/:id')
   async updateMedicalRecord(@Param('id') id: string, @Body() recordData: UpdateMedicalRecordDto) {
     return this.dentalService.updateMedicalRecord(id, recordData);
   }
 
   @ApiTags('牙科诊所管理', '病历管理')
-  @ApiOperation({ summary: '删除病历' })
-  @ApiParam({ name: 'id', description: '病历ID' })
+  @ApiOperation({ summary: '删除病历', description: '根据ID删除病历' })
   @ApiResponse({ status: 200, description: '成功删除病历' })
+  @ApiResponse({ status: 404, description: '病历不存在' })
   @Delete('records/:id')
   async deleteMedicalRecord(@Param('id') id: string) {
     return this.dentalService.deleteMedicalRecord(id);
@@ -172,9 +164,8 @@ export class DentalController {
 
   /* 复诊记录API */
   @ApiTags('牙科诊所管理', '随访管理')
-  @ApiOperation({ summary: '获取患者复诊记录列表' })
-  @ApiParam({ name: 'patientId', description: '患者ID' })
-  @ApiResponse({ status: 200, description: '成功返回复诊记录列表' })
+  @ApiOperation({ summary: '获取患者随访记录', description: '获取指定患者的随访记录，支持分页' })
+  @ApiResponse({ status: 200, description: '成功返回随访记录列表' })
   @Get('patients/:patientId/followups')
   async getFollowups(
     @Param('patientId') patientId: string,
@@ -184,9 +175,8 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '随访管理')
-  @ApiOperation({ summary: '创建患者复诊记录' })
-  @ApiParam({ name: 'patientId', description: '患者ID' })
-  @ApiResponse({ status: 201, description: '成功创建复诊记录' })
+  @ApiOperation({ summary: '创建随访记录', description: '为指定患者创建随访记录' })
+  @ApiResponse({ status: 201, description: '成功创建随访记录' })
   @Post('patients/:patientId/followups')
   async createFollowup(
     @Param('patientId') patientId: string,
@@ -196,150 +186,20 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '随访管理')
-  @ApiOperation({ summary: '更新复诊记录信息' })
-  @ApiParam({ name: 'id', description: '复诊记录ID' })
-  @ApiResponse({ status: 200, description: '成功更新复诊记录信息' })
+  @ApiOperation({ summary: '更新随访记录', description: '根据ID更新随访记录信息' })
+  @ApiResponse({ status: 200, description: '成功更新随访记录信息' })
+  @ApiResponse({ status: 404, description: '随访记录不存在' })
   @Put('followups/:id')
   async updateFollowup(@Param('id') id: string, @Body() followupData: UpdateFollowupDto) {
     return this.dentalService.updateFollowup(id, followupData);
   }
 
   @ApiTags('牙科诊所管理', '随访管理')
-  @ApiOperation({ summary: '删除复诊记录' })
-  @ApiParam({ name: 'id', description: '复诊记录ID' })
-  @ApiResponse({ status: 200, description: '成功删除复诊记录' })
+  @ApiOperation({ summary: '删除随访记录', description: '根据ID删除随访记录' })
+  @ApiResponse({ status: 200, description: '成功删除随访记录' })
+  @ApiResponse({ status: 404, description: '随访记录不存在' })
   @Delete('followups/:id')
   async deleteFollowup(@Param('id') id: string) {
     return this.dentalService.deleteFollowup(id);
-  }
-
-  /* 库存管理API */
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '获取库存物品列表', description: '获取所有库存物品的列表，支持分页和过滤' })
-  @ApiResponse({ status: 200, description: '成功获取库存物品列表' })
-  @Get('inventory')
-  async getInventoryList(@Query() query: InventoryQueryDto) {
-    return this.dentalService.getInventoryList(query);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '获取库存物品详情', description: '根据ID获取单个库存物品的详细信息' })
-  @ApiParam({ name: 'id', description: '库存物品ID' })
-  @ApiResponse({ status: 200, description: '成功获取库存物品详情' })
-  @ApiResponse({ status: 404, description: '库存物品不存在' })
-  @Get('inventory/:id')
-  async getInventory(@Param('id') id: string) {
-    return this.dentalService.getInventory(id);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '创建库存物品', description: '创建新的库存物品' })
-  @ApiResponse({ status: 201, description: '成功创建库存物品' })
-  @Post('inventory')
-  async createInventory(@Body() inventoryData: CreateInventoryDto) {
-    return this.dentalService.createInventory(inventoryData);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '更新库存物品', description: '根据ID更新库存物品信息' })
-  @ApiParam({ name: 'id', description: '库存物品ID' })
-  @ApiResponse({ status: 200, description: '成功更新库存物品' })
-  @ApiResponse({ status: 404, description: '库存物品不存在' })
-  @Put('inventory/:id')
-  async updateInventory(@Param('id') id: string, @Body() inventoryData: UpdateInventoryDto) {
-    return this.dentalService.updateInventory(id, inventoryData);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '删除库存物品', description: '根据ID删除库存物品' })
-  @ApiParam({ name: 'id', description: '库存物品ID' })
-  @ApiResponse({ status: 200, description: '成功删除库存物品' })
-  @ApiResponse({ status: 404, description: '库存物品不存在' })
-  @Delete('inventory/:id')
-  async deleteInventory(@Param('id') id: string) {
-    return this.dentalService.deleteInventory(id);
-  }
-
-  /* 库存统计API */
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '获取库存统计信息', description: '获取库存的统计信息，如总数量、库存预警、过期预警等' })
-  @ApiResponse({ status: 200, description: '成功获取库存统计信息' })
-  @Get('inventory/statistics/summary')
-  async getInventoryStatistics() {
-    return this.dentalService.getInventoryStatistics();
-  }
-
-  /* 入库记录API */
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '获取入库记录列表', description: '获取所有入库记录的列表，支持分页和过滤' })
-  @ApiResponse({ status: 200, description: '成功获取入库记录列表' })
-  @Get('inventory/in-records')
-  async getInventoryInRecords(@Query() query: InventoryInRecordQueryDto) {
-    return this.dentalService.getInventoryInRecords(query);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '创建入库记录', description: '创建新的入库记录' })
-  @ApiResponse({ status: 201, description: '成功创建入库记录' })
-  @Post('inventory/in-records')
-  async createInventoryInRecord(@Body() inRecordData: CreateInventoryInRecordDto) {
-    return this.dentalService.createInventoryInRecord(inRecordData);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '获取入库记录详情', description: '根据ID获取单个入库记录的详细信息' })
-  @ApiParam({ name: 'id', description: '入库记录ID' })
-  @ApiResponse({ status: 200, description: '成功获取入库记录详情' })
-  @ApiResponse({ status: 404, description: '入库记录不存在' })
-  @Get('inventory/in-records/:id')
-  async getInventoryInRecord(@Param('id') id: string) {
-    return this.dentalService.getInventoryInRecord(id);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '删除入库记录', description: '根据ID删除入库记录' })
-  @ApiParam({ name: 'id', description: '入库记录ID' })
-  @ApiResponse({ status: 200, description: '成功删除入库记录' })
-  @ApiResponse({ status: 404, description: '入库记录不存在' })
-  @Delete('inventory/in-records/:id')
-  async deleteInventoryInRecord(@Param('id') id: string) {
-    return this.dentalService.deleteInventoryInRecord(id);
-  }
-
-  /* 出库记录API */
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '获取出库记录列表', description: '获取所有出库记录的列表，支持分页和过滤' })
-  @ApiResponse({ status: 200, description: '成功获取出库记录列表' })
-  @Get('inventory/out-records')
-  async getInventoryOutRecords(@Query() query: InventoryOutRecordQueryDto) {
-    return this.dentalService.getInventoryOutRecords(query);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '创建出库记录', description: '创建新的出库记录' })
-  @ApiResponse({ status: 201, description: '成功创建出库记录' })
-  @Post('inventory/out-records')
-  async createInventoryOutRecord(@Body() outRecordData: CreateInventoryOutRecordDto) {
-    return this.dentalService.createInventoryOutRecord(outRecordData);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '获取出库记录详情', description: '根据ID获取单个出库记录的详细信息' })
-  @ApiParam({ name: 'id', description: '出库记录ID' })
-  @ApiResponse({ status: 200, description: '成功获取出库记录详情' })
-  @ApiResponse({ status: 404, description: '出库记录不存在' })
-  @Get('inventory/out-records/:id')
-  async getInventoryOutRecord(@Param('id') id: string) {
-    return this.dentalService.getInventoryOutRecord(id);
-  }
-
-  @ApiTags('牙科诊所管理', '库存管理')
-  @ApiOperation({ summary: '删除出库记录', description: '根据ID删除出库记录' })
-  @ApiParam({ name: 'id', description: '出库记录ID' })
-  @ApiResponse({ status: 200, description: '成功删除出库记录' })
-  @ApiResponse({ status: 404, description: '出库记录不存在' })
-  @Delete('inventory/out-records/:id')
-  async deleteInventoryOutRecord(@Param('id') id: string) {
-    return this.dentalService.deleteInventoryOutRecord(id);
   }
 }

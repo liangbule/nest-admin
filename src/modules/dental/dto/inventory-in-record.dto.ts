@@ -71,10 +71,9 @@ export class CreateInventoryInRecordDto {
   type: string;
 
   @ApiProperty({ description: '单价', required: false })
-  @IsDecimal()
+  @IsString()
   @IsOptional()
-  @Type(() => Number)
-  unitPrice?: number;
+  unitPrice?: string;
 
   @ApiProperty({ description: '供应商', required: false })
   @IsString()

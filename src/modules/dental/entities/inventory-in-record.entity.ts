@@ -34,23 +34,23 @@ export class InventoryInRecord {
   supplier: string;
 
   @ApiProperty({ description: '批次号', required: false })
-  @Column({ nullable: true })
+  @Column({ name: 'batch_number', nullable: true })
   batchNumber: string;
 
   @ApiProperty({ description: '生产日期', required: false })
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'production_date', type: 'date', nullable: true })
   productionDate: Date;
 
   @ApiProperty({ description: '有效期至', required: false })
-  @Column({ type: 'date', nullable: true })
+  @Column({ name: 'expiration_date', type: 'date', nullable: true })
   expirationDate: Date;
 
   @ApiProperty({ description: '单价', type: 'number', required: false })
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ name: 'unit_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
   unitPrice: number;
 
   @ApiProperty({ description: '总价', type: 'number', required: false })
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ name: 'total_price', type: 'decimal', precision: 10, scale: 2, nullable: true })
   totalPrice: number;
 
   @ApiProperty({ description: '操作人' })
@@ -62,23 +62,23 @@ export class InventoryInRecord {
   remarks: string;
   
   @ApiProperty({ description: '创建时间' })
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @ApiProperty({ description: '更新时间' })
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   @ApiProperty({ description: '删除时间', required: false })
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'delete_time' })
   deleteTime: Date;
 
   // 关联关系
   @ApiProperty({ description: '关联库存ID' })
-  @Column()
+  @Column({ name: 'inventory_id' })
   inventoryId: string;
 
   @ManyToOne(() => Inventory, inventory => inventory.inRecords)
-  @JoinColumn({ name: 'inventoryId' })
+  @JoinColumn({ name: 'inventory_id' })
   inventory: Inventory;
 } 

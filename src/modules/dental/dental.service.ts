@@ -701,8 +701,8 @@ export class DentalService {
       const inRecord = this.inventoryInRecordRepository.create({
         inventoryId,
         quantity,
-        unitPrice,
-        totalPrice: quantity * unitPrice,
+        unitPrice: unitPrice ? parseFloat(unitPrice) : null,
+        totalPrice: unitPrice ? quantity * parseFloat(unitPrice) : null,
         ...rest,
       });
       const savedRecord = await this.inventoryInRecordRepository.save(inRecord);

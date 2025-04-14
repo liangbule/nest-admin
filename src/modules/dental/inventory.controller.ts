@@ -55,8 +55,8 @@ export class InventoryController {
   // 入库记录管理
   @ApiOperation({ summary: '获取入库记录列表', description: '获取入库记录，支持分页、筛选' })
   @ApiResponse({ status: 200, description: '获取成功' })
-  @Get('in-records')
-  async getInRecords(@Query() query: InventoryInRecordQueryDto) {
+  @Get('records/in/list')
+  async getInRecordsList(@Query() query: InventoryInRecordQueryDto) {
     return this.dentalService.getInventoryInRecords(query);
   }
 
@@ -86,8 +86,8 @@ export class InventoryController {
   // 出库记录管理
   @ApiOperation({ summary: '获取出库记录列表', description: '获取出库记录，支持分页、筛选' })
   @ApiResponse({ status: 200, description: '获取成功' })
-  @Get('out-records')
-  async getOutRecords(@Query() query: InventoryOutRecordQueryDto) {
+  @Get('records/out/list')
+  async getOutRecordsList(@Query() query: InventoryOutRecordQueryDto) {
     return this.dentalService.getInventoryOutRecords(query);
   }
 

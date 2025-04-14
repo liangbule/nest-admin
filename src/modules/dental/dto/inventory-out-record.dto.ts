@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsDate, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsDateString, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateInventoryOutRecordDto {
@@ -73,13 +73,13 @@ export class InventoryOutRecordQueryDto {
   type?: string;
 
   @ApiProperty({ description: '开始日期', required: false })
-  @IsDate()
+  @IsDateString()
   @IsOptional()
   @Type(() => Date)
   startDate?: Date;
 
   @ApiProperty({ description: '结束日期', required: false })
-  @IsDate()
+  @IsDateString()
   @IsOptional()
   @Type(() => Date)
   endDate?: Date;

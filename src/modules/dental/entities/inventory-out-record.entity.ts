@@ -30,7 +30,7 @@ export class InventoryOutRecord {
   type: string;
 
   @ApiProperty({ description: '批次号', required: false })
-  @Column({ nullable: true })
+  @Column({ name: 'batch_number', nullable: true })
   batchNumber: string;
 
   @ApiProperty({ description: '使用/出库目的', required: false })
@@ -38,11 +38,11 @@ export class InventoryOutRecord {
   purpose: string;
 
   @ApiProperty({ description: '关联患者ID', required: false })
-  @Column({ nullable: true })
+  @Column({ name: 'patient_id', nullable: true })
   patientId: string;
 
   @ApiProperty({ description: '关联医疗记录ID', required: false })
-  @Column({ nullable: true })
+  @Column({ name: 'medical_record_id', nullable: true })
   medicalRecordId: string;
 
   @ApiProperty({ description: '操作人' })
@@ -54,23 +54,23 @@ export class InventoryOutRecord {
   remarks: string;
   
   @ApiProperty({ description: '创建时间' })
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
   @ApiProperty({ description: '更新时间' })
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
   @ApiProperty({ description: '删除时间', required: false })
-  @DeleteDateColumn()
+  @DeleteDateColumn({ name: 'delete_time' })
   deleteTime: Date;
 
   // 关联关系
   @ApiProperty({ description: '关联库存ID' })
-  @Column()
+  @Column({ name: 'inventory_id' })
   inventoryId: string;
 
   @ManyToOne(() => Inventory, inventory => inventory.outRecords)
-  @JoinColumn({ name: 'inventoryId' })
+  @JoinColumn({ name: 'inventory_id' })
   inventory: Inventory;
 } 

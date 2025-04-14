@@ -43,8 +43,10 @@
 4. 随访管理：`/api/dental/patients/:patientId/followups`和`/api/dental/followups`
 5. 库存管理：
    - 库存物品：`/api/dental/inventory`
-   - 入库记录：`/api/dental/inventory/in-records`
-   - 出库记录：`/api/dental/inventory/out-records`
+   - 入库记录：`/api/dental/inventory/in-records`（创建和单条操作）
+   - 出库记录：`/api/dental/inventory/out-records`（创建和单条操作）
+   - 入库记录列表：`/api/dental/inventory/records/in/list`
+   - 出库记录列表：`/api/dental/inventory/records/out/list`
    - 库存统计：`/api/dental/inventory/statistics`
 
 ## 认证方式
@@ -84,4 +86,13 @@ Authorization: Bearer your_jwt_token
 
 5. **Inventory（库存）**：
    - 库存物品（InventoryItem）可以有多个入库记录（InventoryInRecord）
-   - 库存物品可以有多个出库记录（InventoryOutRecord） 
+   - 库存物品可以有多个出库记录（InventoryOutRecord）
+
+## 版本更新说明
+
+### 2024-07-12 API路径优化
+- 为避免路由冲突，入库和出库记录列表的API路径已更新：
+  - 入库记录列表：从`/api/dental/inventory/in-records`修改为`/api/dental/inventory/records/in/list`
+  - 出库记录列表：从`/api/dental/inventory/out-records`修改为`/api/dental/inventory/records/out/list`
+- 这一更改解决了路径参数`:id`与记录列表获取路径的冲突问题
+- 创建操作和单条记录操作的路径保持不变，确保向后兼容性 
