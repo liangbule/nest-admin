@@ -117,7 +117,7 @@ export class InventoryController {
   // 库存统计
   @ApiOperation({ summary: '获取库存统计信息', description: '获取库存状态统计，如预警、库存不足等' })
   @ApiResponse({ status: 200, description: '获取成功' })
-  @Get('statistics')
+  @Get('stats')
   async getInventoryStatistics() {
     return this.dentalService.getInventoryStatistics();
   }

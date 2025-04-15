@@ -10,6 +10,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 class LoginResponseDto {
   access_token: string;
@@ -92,5 +93,13 @@ export class AuthController {
   @ApiResponse({ status: 409, description: '用户名或邮箱已存在' })
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
+  }
+
+  @Post('refresh')
+  @ApiOperation({ summary: '刷新访问令牌' })
+  @ApiResponse({ status: 200, description: '成功刷新令牌' })
+  @ApiResponse({ status: 401, description: '无效的刷新令牌' })
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshToken(refreshTokenDto.refreshToken);
   }
 }
