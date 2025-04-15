@@ -48,7 +48,7 @@ export class TransformInterceptor<T>
         if (data && typeof data === 'object' && 'success' in data) {
           // 从牙科模块的嵌套响应中提取数据
           const { success, message, data: responseData } = data;
-          
+
           // 直接返回扁平化的响应结构
           return {
             code: success ? 200 : 400,
@@ -77,7 +77,7 @@ export class TransformInterceptor<T>
             total: data.meta.total,
             page: data.meta.page,
             pageSize: data.meta.pageSize,
-            totalPages: data.meta.totalPages
+            totalPages: data.meta.totalPages,
           } as any);
         }
 

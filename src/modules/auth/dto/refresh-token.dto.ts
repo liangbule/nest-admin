@@ -9,4 +9,4 @@ export class RefreshTokenDto {
   @ApiProperty({ description: '刷新令牌' })
   @IsString()
   refreshToken: string;
-} 
+}

@@ -3,17 +3,21 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from '../auth/auth.module';
 import { DentalController } from './dental.controller';
 import { DentalService } from './dental.service';
-import { Patient } from './entities/patient.entity';
-import { Appointment } from './entities/appointment.entity';
 import { MedicalRecord } from './entities/medical-record.entity';
 import { Followup } from './entities/followup.entity';
-import { Inventory } from './entities/inventory.entity';
-import { InventoryInRecord } from './entities/inventory-in-record.entity';
-import { InventoryOutRecord } from './entities/inventory-out-record.entity';
-import { InventoryController } from './inventory.controller';
+import { Patient } from './patient/entities/patient.entity';
+import { Appointment } from './appointment/entities/appointment.entity';
+import { Inventory } from './inventory/entities/inventory.entity';
+import { InventoryInRecord } from './inventory/entities/inventory-in-record.entity';
+import { InventoryOutRecord } from './inventory/entities/inventory-out-record.entity';
+import { StockTake } from './inventory/entities/stock-take.entity';
+import { StockTakeItem } from './inventory/entities/stock-take-item.entity';
 import { Injectable } from '@nestjs/common';
 import { Connection } from 'typeorm';
 import { InjectConnection } from '@nestjs/typeorm';
+import { InventoryModule } from './inventory/inventory.module';
+import { PatientModule } from './patient/patient.module';
+import { AppointmentModule } from './appointment/appointment.module';
 
 /**
  * 数据库初始化服务
@@ -27,7 +31,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
   async onModuleInit() {
     try {
       console.log('正在检查牙科模块所需的数据库表...');
-      
+
       // 检查需要的数据库表
       const tables = [
         'dental_patients',
@@ -36,9 +40,11 @@ export class DentalDatabaseInitService implements OnModuleInit {
         'dental_followups',
         'dental_inventory',
         'dental_inventory_in_record',
-        'dental_inventory_out_record'
+        'dental_inventory_out_record',
+        'dental_stock_take',
+        'dental_stock_take_item',
       ];
-      
+
       for (const table of tables) {
         const tableExists = await this.checkTableExists(table);
         if (!tableExists) {
@@ -48,7 +54,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
           console.log(`表 ${table} 已存在`);
         }
       }
-      
+
       console.log('牙科模块数据库表检查/创建完成');
     } catch (error) {
       console.error('牙科模块数据库初始化失败:', error);
@@ -60,7 +66,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
       const result = await this.connection.query(
         `SELECT COUNT(*) as count FROM information_schema.tables 
          WHERE table_schema = DATABASE() 
-         AND table_name = '${tableName}'`
+         AND table_name = '${tableName}'`,
       );
       return result[0].count > 0;
     } catch (error) {
@@ -95,7 +101,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
           `);
           console.log(`✅ 成功创建表 ${tableName}`);
           break;
-          
+
         case 'dental_inventory_in_record':
           await this.connection.query(`
             CREATE TABLE dental_inventory_in_record (
@@ -119,7 +125,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
           `);
           console.log(`✅ 成功创建表 ${tableName}`);
           break;
-          
+
         case 'dental_inventory_out_record':
           await this.connection.query(`
             CREATE TABLE dental_inventory_out_record (
@@ -141,7 +147,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
           `);
           console.log(`✅ 成功创建表 ${tableName}`);
           break;
-          
+
         case 'dental_patients':
           await this.connection.query(`
             CREATE TABLE dental_patients (
@@ -164,7 +170,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
           `);
           console.log(`✅ 成功创建表 ${tableName}`);
           break;
-          
+
         case 'dental_appointments':
           await this.connection.query(`
             CREATE TABLE dental_appointments (
@@ -184,7 +190,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
           `);
           console.log(`✅ 成功创建表 ${tableName}`);
           break;
-          
+
         case 'dental_medical_records':
           await this.connection.query(`
             CREATE TABLE dental_medical_records (
@@ -208,7 +214,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
           `);
           console.log(`✅ 成功创建表 ${tableName}`);
           break;
-          
+
         case 'dental_followups':
           await this.connection.query(`
             CREATE TABLE dental_followups (
@@ -232,7 +238,44 @@ export class DentalDatabaseInitService implements OnModuleInit {
           `);
           console.log(`✅ 成功创建表 ${tableName}`);
           break;
-          
+
+        case 'dental_stock_take':
+          await this.connection.query(`
+            CREATE TABLE dental_stock_take (
+              id VARCHAR(36) NOT NULL PRIMARY KEY,
+              batch_number VARCHAR(100) NULL COMMENT '盘点批次号',
+              stock_take_date DATE NULL COMMENT '盘点日期',
+              operator VARCHAR(100) NOT NULL COMMENT '操作人',
+              remarks TEXT NULL COMMENT '备注',
+              result_summary TEXT NULL COMMENT '盘点结果摘要',
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+              delete_time TIMESTAMP NULL COMMENT '删除时间'
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='牙科诊所库存盘点表';
+          `);
+          console.log(`✅ 成功创建表 ${tableName}`);
+          break;
+
+        case 'dental_stock_take_item':
+          await this.connection.query(`
+            CREATE TABLE dental_stock_take_item (
+              id VARCHAR(36) NOT NULL PRIMARY KEY,
+              stock_take_id VARCHAR(36) NOT NULL COMMENT '盘点ID',
+              inventory_id VARCHAR(36) NOT NULL COMMENT '库存项ID',
+              system_quantity INT NOT NULL COMMENT '系统记录数量',
+              actual_quantity INT NOT NULL COMMENT '实际盘点数量',
+              difference INT NOT NULL COMMENT '差异数量',
+              reason TEXT NULL COMMENT '差异原因',
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+              delete_time TIMESTAMP NULL COMMENT '删除时间',
+              FOREIGN KEY (stock_take_id) REFERENCES dental_stock_take(id),
+              FOREIGN KEY (inventory_id) REFERENCES dental_inventory(id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='牙科诊所库存盘点项表';
+          `);
+          console.log(`✅ 成功创建表 ${tableName}`);
+          break;
+
         default:
           console.log(`⚠️ 未找到表 ${tableName} 的创建脚本`);
       }
@@ -246,7 +289,7 @@ export class DentalDatabaseInitService implements OnModuleInit {
  * 牙科诊所管理系统模块
  * 用于集中管理牙科诊所管理系统的所有功能
  * 包含患者管理、预约管理、医疗记录等功能
- * 
+ *
  * API分类结构:
  * 一级分类: 牙科诊所管理
  * 二级分类:
@@ -257,19 +300,24 @@ export class DentalDatabaseInitService implements OnModuleInit {
  */
 @Module({
   imports: [
+    AuthModule,
+    PatientModule,
+    AppointmentModule,
+    InventoryModule,
     TypeOrmModule.forFeature([
       Patient,
       Appointment,
-      MedicalRecord,
+      MedicalRecord, 
       Followup,
       Inventory,
       InventoryInRecord,
       InventoryOutRecord,
+      StockTake,
+      StockTakeItem
     ]),
-    AuthModule,
   ],
-  controllers: [DentalController, InventoryController],
-  providers: [DentalService, DentalDatabaseInitService],
+  controllers: [DentalController],
+  providers: [DentalDatabaseInitService, DentalService],
   exports: [DentalService],
 })
 export class DentalModule {}

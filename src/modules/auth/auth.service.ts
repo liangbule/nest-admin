@@ -106,11 +106,13 @@ export class AuthService {
    * @param refreshToken 刷新令牌
    * @returns 新的访问令牌和刷新令牌
    */
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+  async refreshToken(
+    refreshToken: string,
+  ): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       // 验证刷新令牌
       const payload = this.jwtService.verify(refreshToken);
-      
+
       // 检查用户是否存在
       const user = await this.userService.findOne(payload.sub);
       if (!user) {
@@ -120,17 +122,17 @@ export class AuthService {
       // 生成新的访问令牌和刷新令牌
       const newAccessToken = this.jwtService.sign(
         { sub: user.id, username: user.username },
-        { expiresIn: '1h' }
+        { expiresIn: '1h' },
       );
-      
+
       const newRefreshToken = this.jwtService.sign(
         { sub: user.id },
-        { expiresIn: '7d' }
+        { expiresIn: '7d' },
       );
 
       return {
         accessToken: newAccessToken,
-        refreshToken: newRefreshToken
+        refreshToken: newRefreshToken,
       };
     } catch (error) {
       this.logger.error(`刷新令牌失败: ${error.message}`);

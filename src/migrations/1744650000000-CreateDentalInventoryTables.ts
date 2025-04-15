@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateDentalInventoryTables1744650000000 implements MigrationInterface {
+export class CreateDentalInventoryTables1744650000000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // 创建库存表
     await queryRunner.query(`
@@ -67,20 +69,38 @@ export class CreateDentalInventoryTables1744650000000 implements MigrationInterf
     `);
 
     // 创建索引
-    await queryRunner.query(`CREATE INDEX idx_inventory_code ON dental_inventory(code);`);
-    await queryRunner.query(`CREATE INDEX idx_inventory_name ON dental_inventory(name);`);
-    await queryRunner.query(`CREATE INDEX idx_inventory_type ON dental_inventory(type);`);
-    await queryRunner.query(`CREATE INDEX idx_in_record_inventory_id ON dental_inventory_in_record(inventory_id);`);
-    await queryRunner.query(`CREATE INDEX idx_in_record_type ON dental_inventory_in_record(type);`);
-    await queryRunner.query(`CREATE INDEX idx_out_record_inventory_id ON dental_inventory_out_record(inventory_id);`);
-    await queryRunner.query(`CREATE INDEX idx_out_record_type ON dental_inventory_out_record(type);`);
-    await queryRunner.query(`CREATE INDEX idx_out_record_patient_id ON dental_inventory_out_record(patient_id);`);
+    await queryRunner.query(
+      `CREATE INDEX idx_inventory_code ON dental_inventory(code);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_inventory_name ON dental_inventory(name);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_inventory_type ON dental_inventory(type);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_in_record_inventory_id ON dental_inventory_in_record(inventory_id);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_in_record_type ON dental_inventory_in_record(type);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_out_record_inventory_id ON dental_inventory_out_record(inventory_id);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_out_record_type ON dental_inventory_out_record(type);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX idx_out_record_patient_id ON dental_inventory_out_record(patient_id);`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // 删除表 (按创建的相反顺序)
-    await queryRunner.query(`DROP TABLE IF EXISTS dental_inventory_out_record;`);
+    await queryRunner.query(
+      `DROP TABLE IF EXISTS dental_inventory_out_record;`,
+    );
     await queryRunner.query(`DROP TABLE IF EXISTS dental_inventory_in_record;`);
     await queryRunner.query(`DROP TABLE IF EXISTS dental_inventory;`);
   }
-} 
+}

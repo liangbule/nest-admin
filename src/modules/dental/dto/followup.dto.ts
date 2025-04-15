@@ -42,7 +42,9 @@ export class CreateFollowupDto {
   @IsDateString()
   followupDate: Date;
 
-  @ApiProperty({ description: '随访方式：phone-电话, visit-面诊, message-短信' })
+  @ApiProperty({
+    description: '随访方式：phone-电话, visit-面诊, message-短信',
+  })
   @IsNotEmpty({ message: '随访方式不能为空' })
   @IsString()
   followupType: string;
@@ -57,7 +59,10 @@ export class CreateFollowupDto {
   @IsString()
   patientFeedback?: string;
 
-  @ApiProperty({ description: '状态：scheduled-计划中, completed-已完成, missed-未完成', required: false })
+  @ApiProperty({
+    description: '状态：scheduled-计划中, completed-已完成, missed-未完成',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   status?: string = 'completed';
@@ -87,7 +92,10 @@ export class UpdateFollowupDto {
   @IsOptional()
   followupDate?: Date;
 
-  @ApiProperty({ description: '随访方式：phone-电话, visit-面诊, message-短信', required: false })
+  @ApiProperty({
+    description: '随访方式：phone-电话, visit-面诊, message-短信',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   followupType?: string;
@@ -102,7 +110,10 @@ export class UpdateFollowupDto {
   @IsOptional()
   patientFeedback?: string;
 
-  @ApiProperty({ description: '状态：scheduled-计划中, completed-已完成, missed-未完成', required: false })
+  @ApiProperty({
+    description: '状态：scheduled-计划中, completed-已完成, missed-未完成',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   status?: string;
@@ -136,7 +147,7 @@ export class FollowupQueryDto {
   @IsNumber()
   @IsOptional()
   limit?: number;
-  
+
   @ApiProperty({ description: '状态过滤', required: false })
   @IsString()
   @IsOptional()
