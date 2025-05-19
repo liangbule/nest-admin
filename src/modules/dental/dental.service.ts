@@ -1,16 +1,35 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Between, Like } from 'typeorm';
-import { Patient } from './entities/patient.entity';
-import { Appointment } from './entities/appointment.entity';
+import { Appointment } from './appointment/entities/appointment.entity';
 import { MedicalRecord } from './entities/medical-record.entity';
 import { Followup } from './entities/followup.entity';
-import { Inventory } from './entities/inventory.entity';
-import { InventoryInRecord } from './entities/inventory-in-record.entity';
-import { InventoryOutRecord } from './entities/inventory-out-record.entity';
-import { CreateInventoryDto, UpdateInventoryDto, InventoryQueryDto } from './dto/inventory.dto';
-import { CreateInventoryInRecordDto, InventoryInRecordQueryDto } from './dto/inventory-in-record.dto';
-import { CreateInventoryOutRecordDto, InventoryOutRecordQueryDto } from './dto/inventory-out-record.dto';
+import { Inventory } from './inventory/entities/inventory.entity';
+import { InventoryInRecord } from './inventory/entities/inventory-in-record.entity';
+import { InventoryOutRecord } from './inventory/entities/inventory-out-record.entity';
+import { StockTake } from './inventory/entities/stock-take.entity';
+import { StockTakeItem } from './inventory/entities/stock-take-item.entity';
+import {
+  CreateInventoryDto,
+  UpdateInventoryDto,
+  InventoryQueryDto,
+  BatchImportInventoryDto,
+  LowInventoryQueryDto,
+} from './inventory/dto/inventory.dto';
+import {
+  CreateInventoryInRecordDto,
+  InventoryInRecordQueryDto,
+} from './inventory/dto/inventory-in-record.dto';
+import {
+  CreateInventoryOutRecordDto,
+  InventoryOutRecordQueryDto,
+} from './inventory/dto/inventory-out-record.dto';
+import { CreateStockTakeDto, StockTakeQueryDto } from './inventory/dto/stock-take.dto';
+import { PatientService } from './patient/patient.service';
 
 /**
  * 牙科诊所管理系统服务
@@ -19,8 +38,7 @@ import { CreateInventoryOutRecordDto, InventoryOutRecordQueryDto } from './dto/i
 @Injectable()
 export class DentalService {
   constructor(
-    @InjectRepository(Patient)
-    private patientRepository: Repository<Patient>,
+    private patientService: PatientService,
 
     @InjectRepository(Appointment)
     private appointmentRepository: Repository<Appointment>,
@@ -39,6 +57,12 @@ export class DentalService {
 
     @InjectRepository(InventoryOutRecord)
     private inventoryOutRecordRepository: Repository<InventoryOutRecord>,
+
+    @InjectRepository(StockTake)
+    private stockTakeRepository: Repository<StockTake>,
+
+    @InjectRepository(StockTakeItem)
+    private stockTakeItemRepository: Repository<StockTakeItem>,
   ) {}
 
   /* 患者管理方法 */
@@ -47,113 +71,35 @@ export class DentalService {
    * 获取患者列表，支持分页、过滤和排序
    */
   async getPatients(query: any) {
-    const { page = 1, limit = 10, search } = query;
-    const skip = (page - 1) * limit;
-
-    const queryBuilder = this.patientRepository.createQueryBuilder('patient');
-
-    // 搜索条件
-    if (search) {
-      queryBuilder.where(
-        '(patient.name LIKE :search OR patient.phone LIKE :search OR patient.email LIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    // 计算总数
-    const total = await queryBuilder.getCount();
-
-    // 分页
-    queryBuilder.skip(skip).take(limit);
-
-    // 排序
-    queryBuilder.orderBy('patient.createTime', 'DESC');
-
-    // 执行查询
-    const patients = await queryBuilder.getMany();
-
-    return {
-      success: true,
-      message: '获取患者列表成功',
-      data: {
-        items: patients,
-        total,
-        page: Number(page),
-        limit: Number(limit),
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+    return this.patientService.getPatients(query);
   }
 
   /**
    * 获取单个患者的详细信息
    */
   async getPatient(id: string) {
-    const patient = await this.patientRepository.findOne({
-      where: { id },
-      relations: ['appointments', 'medicalRecords', 'followups'],
-    });
-
-    if (!patient) {
-      throw new NotFoundException(`未找到ID为${id}的患者`);
-    }
-
-    return {
-      success: true,
-      message: '获取患者详情成功',
-      data: patient,
-    };
+    return this.patientService.getPatient(id);
   }
 
   /**
    * 创建新患者
    */
   async createPatient(patientData: any) {
-    const patient = this.patientRepository.create(patientData);
-    const savedPatient = await this.patientRepository.save(patient);
-
-    return {
-      success: true,
-      message: '创建患者成功',
-      data: savedPatient,
-    };
+    return this.patientService.createPatient(patientData);
   }
 
   /**
    * 更新患者信息
    */
   async updatePatient(id: string, patientData: any) {
-    const patient = await this.patientRepository.findOne({ where: { id } });
-    if (!patient) {
-      throw new NotFoundException(`未找到ID为${id}的患者`);
-    }
-
-    // 合并数据
-    const updatedPatient = { ...patient, ...patientData };
-    await this.patientRepository.save(updatedPatient);
-
-    return {
-      success: true,
-      message: '更新患者信息成功',
-      data: updatedPatient,
-    };
+    return this.patientService.updatePatient(id, patientData);
   }
 
   /**
    * 删除患者
    */
   async deletePatient(id: string) {
-    const patient = await this.patientRepository.findOne({ where: { id } });
-    if (!patient) {
-      throw new NotFoundException(`未找到ID为${id}的患者`);
-    }
-
-    await this.patientRepository.softDelete(id);
-
-    return {
-      success: true,
-      message: '删除患者成功',
-    };
+    return this.patientService.deletePatient(id);
   }
 
   /* 预约管理方法 */
@@ -237,9 +183,7 @@ export class DentalService {
   async createAppointment(appointmentData: any) {
     // 检查患者是否存在
     if (appointmentData.patientId) {
-      const patient = await this.patientRepository.findOne({
-        where: { id: appointmentData.patientId },
-      });
+      const patient = await this.patientService.getPatient(appointmentData.patientId);
 
       if (!patient) {
         throw new NotFoundException(
@@ -311,9 +255,7 @@ export class DentalService {
     const skip = (page - 1) * limit;
 
     // 检查患者是否存在
-    const patient = await this.patientRepository.findOne({
-      where: { id: patientId },
-    });
+    const patient = await this.patientService.getPatient(patientId);
     if (!patient) {
       throw new NotFoundException(`未找到ID为${patientId}的患者`);
     }
@@ -352,9 +294,7 @@ export class DentalService {
    */
   async createMedicalRecord(patientId: string, recordData: any) {
     // 检查患者是否存在
-    const patient = await this.patientRepository.findOne({
-      where: { id: patientId },
-    });
+    const patient = await this.patientService.getPatient(patientId);
     if (!patient) {
       throw new NotFoundException(`未找到ID为${patientId}的患者`);
     }
@@ -426,9 +366,7 @@ export class DentalService {
     const skip = (page - 1) * limit;
 
     // 检查患者是否存在
-    const patient = await this.patientRepository.findOne({
-      where: { id: patientId },
-    });
+    const patient = await this.patientService.getPatient(patientId);
     if (!patient) {
       throw new NotFoundException(`未找到ID为${patientId}的患者`);
     }
@@ -466,9 +404,7 @@ export class DentalService {
    */
   async createFollowup(patientId: string, followupData: any) {
     // 检查患者是否存在
-    const patient = await this.patientRepository.findOne({
-      where: { id: patientId },
-    });
+    const patient = await this.patientService.getPatient(patientId);
     if (!patient) {
       throw new NotFoundException(`未找到ID为${patientId}的患者`);
     }
@@ -529,7 +465,14 @@ export class DentalService {
   // 库存管理方法
   async getInventoryList(query: InventoryQueryDto) {
     try {
-      const { page = 1, pageSize = 10, keyword, type, supplier, lowStock } = query;
+      const {
+        page = 1,
+        pageSize = 10,
+        keyword,
+        type,
+        supplier,
+        lowStock,
+      } = query;
       const skip = (page - 1) * pageSize;
 
       const whereConditions: any = {};
@@ -569,10 +512,12 @@ export class DentalService {
     } catch (error) {
       console.error('获取库存列表出错:', error);
       // 检查是否为表不存在错误
-      if (error.message && (
-          error.message.includes('dental_inventory') || 
-          error.message.includes('表不存在') || 
-          error.message.includes('doesn\'t exist'))) {
+      if (
+        error.message &&
+        (error.message.includes('dental_inventory') ||
+          error.message.includes('表不存在') ||
+          error.message.includes("doesn't exist"))
+      ) {
         return {
           success: false,
           message: '库存表正在初始化中，请稍后再试',
@@ -619,6 +564,152 @@ export class DentalService {
     };
   }
 
+  async batchImportInventory(batchData: BatchImportInventoryDto) {
+    try {
+      // 确保有库存项
+      if (!batchData.items || batchData.items.length === 0) {
+        return {
+          code: 400,
+          message: '没有可导入的库存项',
+          data: null,
+        };
+      }
+
+      const results = {
+        total: batchData.items.length,
+        success: 0,
+        failed: 0,
+        items: [],
+      };
+
+      // 逐个处理每个库存项
+      for (const item of batchData.items) {
+        try {
+          // 检查是否已存在相同编码的库存项
+          const existingItem = await this.inventoryRepository.findOne({
+            where: { code: item.code },
+          });
+
+          if (existingItem) {
+            // 如果存在，更新库存项
+            await this.inventoryRepository.update(existingItem.id, item);
+            results.success++;
+            results.items.push({
+              code: item.code,
+              name: item.name,
+              status: 'updated',
+              message: '更新成功',
+            });
+          } else {
+            // 如果不存在，创建新库存项
+            const inventory = this.inventoryRepository.create(item);
+            await this.inventoryRepository.save(inventory);
+            results.success++;
+            results.items.push({
+              code: item.code,
+              name: item.name,
+              status: 'created',
+              message: '创建成功',
+            });
+          }
+        } catch (error) {
+          results.failed++;
+          results.items.push({
+            code: item.code,
+            name: item.name,
+            status: 'failed',
+            message: error.message || '处理失败',
+          });
+        }
+      }
+
+      return {
+        code: 200,
+        message: `批量导入完成，成功: ${results.success}, 失败: ${results.failed}`,
+        data: results,
+      };
+    } catch (error) {
+      console.error('批量导入库存出错:', error);
+      throw error;
+    }
+  }
+
+  async getLowInventoryList(query: LowInventoryQueryDto) {
+    try {
+      const {
+        page = 1,
+        pageSize = 10,
+        keyword,
+        type,
+        onlyLow = true,
+        onlyEmpty = false,
+        belowSafety = true,
+      } = query;
+      const skip = (page - 1) * pageSize;
+
+      // 构建查询条件
+      const queryBuilder =
+        this.inventoryRepository.createQueryBuilder('inventory');
+
+      // 添加筛选条件
+      if (keyword) {
+        queryBuilder.andWhere(
+          '(inventory.name LIKE :keyword OR inventory.code LIKE :keyword)',
+          { keyword: `%${keyword}%` },
+        );
+      }
+
+      if (type) {
+        queryBuilder.andWhere('inventory.type = :type', { type });
+      }
+
+      // 低库存条件
+      if (onlyLow) {
+        if (onlyEmpty) {
+          // 仅显示库存为零的物品
+          queryBuilder.andWhere('inventory.current_quantity = 0');
+        } else if (belowSafety) {
+          // 显示低于安全库存的物品
+          queryBuilder.andWhere(
+            'inventory.current_quantity < inventory.safety_quantity',
+          );
+        } else {
+          // 默认显示所有低库存的物品（安全库存或零库存）
+          queryBuilder.andWhere(
+            '(inventory.current_quantity < inventory.safety_quantity OR inventory.current_quantity = 0)',
+          );
+        }
+      }
+
+      // 分页和排序
+      const total = await queryBuilder.getCount();
+
+      queryBuilder
+        .orderBy('inventory.current_quantity', 'ASC') // 库存从低到高排序
+        .skip(skip)
+        .take(pageSize);
+
+      const items = await queryBuilder.getMany();
+
+      return {
+        code: 200,
+        message: '获取低库存预警列表成功',
+        data: {
+          items,
+          meta: {
+            page: Number(page),
+            pageSize: Number(pageSize),
+            total,
+            totalPages: Math.ceil(total / pageSize),
+          },
+        },
+      };
+    } catch (error) {
+      console.error('获取低库存预警列表出错:', error);
+      throw error;
+    }
+  }
+
   async updateInventory(id: string, inventoryData: UpdateInventoryDto) {
     const inventory = await this.inventoryRepository.findOneBy({ id });
     if (!inventory) {
@@ -661,7 +752,10 @@ export class DentalService {
       whereConditions.inventoryId = inventoryId;
     }
     if (startDate && endDate) {
-      whereConditions.createdAt = Between(new Date(startDate), new Date(endDate));
+      whereConditions.createdAt = Between(
+        new Date(startDate),
+        new Date(endDate),
+      );
     }
 
     const [items, total] = await this.inventoryInRecordRepository.findAndCount({
@@ -690,9 +784,11 @@ export class DentalService {
   async createInventoryInRecord(recordData: CreateInventoryInRecordDto) {
     try {
       const { inventoryId, quantity, unitPrice, ...rest } = recordData;
-      
+
       // 查找库存项
-      const inventory = await this.inventoryRepository.findOneBy({ id: inventoryId });
+      const inventory = await this.inventoryRepository.findOneBy({
+        id: inventoryId,
+      });
       if (!inventory) {
         throw new NotFoundException(`未找到ID为${inventoryId}的库存项`);
       }
@@ -720,10 +816,12 @@ export class DentalService {
     } catch (error) {
       console.error('创建入库记录出错:', error);
       // 检查是否为表不存在错误
-      if (error.message && (
-          error.message.includes('dental_inventory_in_record') || 
-          error.message.includes('表不存在') || 
-          error.message.includes('doesn\'t exist'))) {
+      if (
+        error.message &&
+        (error.message.includes('dental_inventory_in_record') ||
+          error.message.includes('表不存在') ||
+          error.message.includes("doesn't exist"))
+      ) {
         return {
           success: false,
           message: '入库记录表正在初始化中，请稍后再试',
@@ -762,7 +860,9 @@ export class DentalService {
     }
 
     const inventoryId = record.inventoryId;
-    const inventory = await this.inventoryRepository.findOneBy({ id: inventoryId });
+    const inventory = await this.inventoryRepository.findOneBy({
+      id: inventoryId,
+    });
 
     // 软删除入库记录
     await this.inventoryInRecordRepository.softDelete(id);
@@ -783,7 +883,14 @@ export class DentalService {
 
   // 出库记录管理
   async getInventoryOutRecords(query: InventoryOutRecordQueryDto) {
-    const { page = 1, pageSize = 10, inventoryId, type, startDate, endDate } = query;
+    const {
+      page = 1,
+      pageSize = 10,
+      inventoryId,
+      type,
+      startDate,
+      endDate,
+    } = query;
     const skip = (page - 1) * pageSize;
 
     const whereConditions: any = {};
@@ -794,16 +901,21 @@ export class DentalService {
       whereConditions.type = type;
     }
     if (startDate && endDate) {
-      whereConditions.createdAt = Between(new Date(startDate), new Date(endDate));
+      whereConditions.createdAt = Between(
+        new Date(startDate),
+        new Date(endDate),
+      );
     }
 
-    const [items, total] = await this.inventoryOutRecordRepository.findAndCount({
-      where: whereConditions,
-      relations: ['inventory'],
-      skip,
-      take: pageSize,
-      order: { createdAt: 'DESC' },
-    });
+    const [items, total] = await this.inventoryOutRecordRepository.findAndCount(
+      {
+        where: whereConditions,
+        relations: ['inventory'],
+        skip,
+        take: pageSize,
+        order: { createdAt: 'DESC' },
+      },
+    );
 
     return {
       success: true,
@@ -823,16 +935,20 @@ export class DentalService {
   async createInventoryOutRecord(recordData: CreateInventoryOutRecordDto) {
     try {
       const { inventoryId, quantity, ...rest } = recordData;
-      
+
       // 查找库存项
-      const inventory = await this.inventoryRepository.findOneBy({ id: inventoryId });
+      const inventory = await this.inventoryRepository.findOneBy({
+        id: inventoryId,
+      });
       if (!inventory) {
         throw new NotFoundException(`未找到ID为${inventoryId}的库存项`);
       }
 
       // 检查库存是否充足
       if (inventory.currentQuantity < quantity) {
-        throw new BadRequestException(`库存不足，当前库存: ${inventory.currentQuantity}, 需要: ${quantity}`);
+        throw new BadRequestException(
+          `库存不足，当前库存: ${inventory.currentQuantity}, 需要: ${quantity}`,
+        );
       }
 
       // 创建出库记录
@@ -841,7 +957,9 @@ export class DentalService {
         quantity,
         ...rest,
       });
-      const savedRecord = await this.inventoryOutRecordRepository.save(outRecord);
+      const savedRecord = await this.inventoryOutRecordRepository.save(
+        outRecord,
+      );
 
       // 更新库存数量
       await this.inventoryRepository.update(inventoryId, {
@@ -856,10 +974,12 @@ export class DentalService {
     } catch (error) {
       console.error('创建出库记录出错:', error);
       // 检查是否为表不存在错误
-      if (error.message && (
-          error.message.includes('dental_inventory_out_record') || 
-          error.message.includes('表不存在') || 
-          error.message.includes('doesn\'t exist'))) {
+      if (
+        error.message &&
+        (error.message.includes('dental_inventory_out_record') ||
+          error.message.includes('表不存在') ||
+          error.message.includes("doesn't exist"))
+      ) {
         return {
           success: false,
           message: '出库记录表正在初始化中，请稍后再试',
@@ -898,7 +1018,9 @@ export class DentalService {
     }
 
     const inventoryId = record.inventoryId;
-    const inventory = await this.inventoryRepository.findOneBy({ id: inventoryId });
+    const inventory = await this.inventoryRepository.findOneBy({
+      id: inventoryId,
+    });
 
     // 软删除出库记录
     await this.inventoryOutRecordRepository.softDelete(id);
@@ -916,42 +1038,45 @@ export class DentalService {
       data: null,
     };
   }
-  
+
   // 库存统计
   async getInventoryStatistics() {
     try {
       console.log('Starting inventory statistics calculation...');
-      
+
       // Total inventory count
       const totalCount = await this.inventoryRepository.count();
       console.log(`Total inventory count: ${totalCount}`);
-      
+
       // Warning count (below safety quantity)
-      const warningQuery = this.inventoryRepository.createQueryBuilder('inventory')
+      const warningQuery = this.inventoryRepository
+        .createQueryBuilder('inventory')
         .where('inventory.current_quantity < inventory.safety_quantity')
         .andWhere('inventory.current_quantity > 0');
-      
+
       console.log('Warning query SQL:', warningQuery.getSql());
       const warningCount = await warningQuery.getCount();
       console.log(`Warning count: ${warningCount}`);
-      
+
       // Empty count
-      const emptyQuery = this.inventoryRepository.createQueryBuilder('inventory')
+      const emptyQuery = this.inventoryRepository
+        .createQueryBuilder('inventory')
         .where('inventory.current_quantity = 0');
-      
+
       console.log('Empty query SQL:', emptyQuery.getSql());
       const emptyCount = await emptyQuery.getCount();
       console.log(`Empty count: ${emptyCount}`);
-      
+
       // Type statistics
-      const typeStats = await this.inventoryRepository.createQueryBuilder('inventory')
+      const typeStats = await this.inventoryRepository
+        .createQueryBuilder('inventory')
         .select('inventory.type', 'type')
         .addSelect('COUNT(*)', 'count')
         .groupBy('inventory.type')
         .getRawMany();
-      
+
       console.log('Type statistics:', typeStats);
-      
+
       return {
         success: true,
         message: '获取库存统计信息成功',
@@ -959,19 +1084,21 @@ export class DentalService {
           totalCount,
           warningCount,
           emptyCount,
-          typeStats: typeStats.map(stat => ({
+          typeStats: typeStats.map((stat) => ({
             type: stat.type,
-            count: parseInt(stat.count)
-          }))
-        }
+            count: parseInt(stat.count),
+          })),
+        },
       };
     } catch (error) {
       console.error('Error in getInventoryStatistics:', error);
       // 检查是否为表不存在错误
-      if (error.message && (
-          error.message.includes('dental_inventory') || 
-          error.message.includes('表不存在') || 
-          error.message.includes('doesn\'t exist'))) {
+      if (
+        error.message &&
+        (error.message.includes('dental_inventory') ||
+          error.message.includes('表不存在') ||
+          error.message.includes("doesn't exist"))
+      ) {
         return {
           success: false,
           message: '库存表正在初始化中，请稍后再试',
@@ -979,15 +1106,217 @@ export class DentalService {
             totalCount: 0,
             warningCount: 0,
             emptyCount: 0,
-            typeStats: []
-          }
+            typeStats: [],
+          },
         };
       }
       return {
         success: false,
         message: `获取库存统计信息失败: ${error.message}`,
-        error: error.stack
+        error: error.stack,
       };
     }
+  }
+
+  // 库存盘点管理
+  async getStockTakeList(query: StockTakeQueryDto) {
+    try {
+      const {
+        page = 1,
+        pageSize = 10,
+        startDate,
+        endDate,
+        operator,
+        batchNumber,
+      } = query;
+      const skip = (page - 1) * pageSize;
+
+      const whereConditions: any = {};
+      if (operator) {
+        whereConditions.operator = operator;
+      }
+      if (batchNumber) {
+        whereConditions.batchNumber = Like(`%${batchNumber}%`);
+      }
+      if (startDate && endDate) {
+        whereConditions.stockTakeDate = Between(
+          new Date(startDate),
+          new Date(endDate),
+        );
+      }
+
+      const [items, total] = await this.stockTakeRepository.findAndCount({
+        where: whereConditions,
+        skip,
+        take: pageSize,
+        order: { createdAt: 'DESC' },
+        relations: ['items', 'items.inventory'],
+      });
+
+      return {
+        code: 200,
+        message: '获取盘点记录列表成功',
+        data: {
+          items,
+          meta: {
+            page: Number(page),
+            pageSize: Number(pageSize),
+            total,
+            totalPages: Math.ceil(total / pageSize),
+          },
+        },
+      };
+    } catch (error) {
+      console.error('获取盘点记录列表出错:', error);
+      // 检查是否为表不存在错误
+      if (
+        error.message &&
+        (error.message.includes('dental_stock_take') ||
+          error.message.includes('表不存在') ||
+          error.message.includes("doesn't exist"))
+      ) {
+        return {
+          code: 200,
+          message: '盘点表正在初始化中，请稍后再试',
+          data: {
+            items: [],
+            meta: {
+              page: 1,
+              pageSize: 10,
+              total: 0,
+              totalPages: 0,
+            },
+          },
+        };
+      }
+      throw error;
+    }
+  }
+
+  async getStockTake(id: string) {
+    const stockTake = await this.stockTakeRepository.findOne({
+      where: { id },
+      relations: ['items', 'items.inventory'],
+    });
+
+    if (!stockTake) {
+      throw new NotFoundException(`未找到ID为${id}的盘点记录`);
+    }
+
+    return {
+      code: 200,
+      message: '获取盘点记录成功',
+      data: stockTake,
+    };
+  }
+
+  async createStockTake(stockTakeData: CreateStockTakeDto) {
+    try {
+      // 1. 创建盘点主记录
+      const stockTake = this.stockTakeRepository.create({
+        batchNumber: stockTakeData.batchNumber || `ST-${new Date().getTime()}`,
+        stockTakeDate: stockTakeData.stockTakeDate
+          ? new Date(stockTakeData.stockTakeDate)
+          : new Date(),
+        operator: stockTakeData.operator,
+        remarks: stockTakeData.remarks,
+      });
+
+      const savedStockTake = await this.stockTakeRepository.save(stockTake);
+
+      // 2. 处理盘点项
+      const stockTakeItems = [];
+      let totalItems = 0;
+      let matchItems = 0;
+      let differencesItems = 0;
+
+      for (const item of stockTakeData.items) {
+        // 获取当前库存数量
+        const inventory = await this.inventoryRepository.findOne({
+          where: { id: item.inventoryId },
+        });
+
+        if (!inventory) {
+          throw new NotFoundException(`未找到ID为${item.inventoryId}的库存项`);
+        }
+
+        const systemQuantity = inventory.currentQuantity;
+        const actualQuantity = item.actualQuantity;
+        const difference = actualQuantity - systemQuantity;
+
+        // 创建盘点项记录
+        const stockTakeItem = this.stockTakeItemRepository.create({
+          stockTakeId: savedStockTake.id,
+          inventoryId: item.inventoryId,
+          systemQuantity,
+          actualQuantity,
+          difference,
+          reason: item.reason || (difference !== 0 ? '盘点差异' : '数量一致'),
+        });
+
+        await this.stockTakeItemRepository.save(stockTakeItem);
+        stockTakeItems.push(stockTakeItem);
+
+        // 如果盘点数量与系统数量不一致，则更新库存数量
+        if (difference !== 0) {
+          await this.inventoryRepository.update(item.inventoryId, {
+            currentQuantity: actualQuantity,
+          });
+          differencesItems++;
+        } else {
+          matchItems++;
+        }
+
+        totalItems++;
+      }
+
+      // 3. 更新盘点主记录的结果摘要
+      const resultSummary = `共盘点${totalItems}项商品，一致${matchItems}项，差异${differencesItems}项`;
+      await this.stockTakeRepository.update(savedStockTake.id, {
+        resultSummary,
+      });
+
+      savedStockTake.resultSummary = resultSummary;
+      savedStockTake.items = stockTakeItems;
+
+      return {
+        code: 200,
+        message: '创建盘点记录成功',
+        data: savedStockTake,
+      };
+    } catch (error) {
+      console.error('创建盘点记录出错:', error);
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(`创建盘点记录失败: ${error.message}`);
+    }
+  }
+
+  async deleteStockTake(id: string) {
+    const stockTake = await this.stockTakeRepository.findOne({
+      where: { id },
+      relations: ['items'],
+    });
+
+    if (!stockTake) {
+      throw new NotFoundException(`未找到ID为${id}的盘点记录`);
+    }
+
+    // 先删除关联的盘点项
+    if (stockTake.items && stockTake.items.length > 0) {
+      await this.stockTakeItemRepository.softDelete(
+        stockTake.items.map((item) => item.id),
+      );
+    }
+
+    // 再删除盘点主记录
+    await this.stockTakeRepository.softDelete(id);
+
+    return {
+      code: 200,
+      message: '删除盘点记录成功',
+      data: null,
+    };
   }
 }

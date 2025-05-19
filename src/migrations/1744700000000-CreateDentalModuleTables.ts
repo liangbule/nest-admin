@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateDentalModuleTables1744700000000 implements MigrationInterface {
+export class CreateDentalModuleTables1744700000000
+  implements MigrationInterface
+{
   name = 'CreateDentalModuleTables1744700000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -121,10 +123,18 @@ export class CreateDentalModuleTables1744700000000 implements MigrationInterface
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // 删除外键约束
-    await queryRunner.query(`ALTER TABLE \`dental_followups\` DROP FOREIGN KEY \`FK_dental_followups_medical_record\``);
-    await queryRunner.query(`ALTER TABLE \`dental_followups\` DROP FOREIGN KEY \`FK_dental_followups_patient\``);
-    await queryRunner.query(`ALTER TABLE \`dental_medical_records\` DROP FOREIGN KEY \`FK_dental_medical_records_patient\``);
-    await queryRunner.query(`ALTER TABLE \`dental_appointments\` DROP FOREIGN KEY \`FK_dental_appointments_patient\``);
+    await queryRunner.query(
+      `ALTER TABLE \`dental_followups\` DROP FOREIGN KEY \`FK_dental_followups_medical_record\``,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`dental_followups\` DROP FOREIGN KEY \`FK_dental_followups_patient\``,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`dental_medical_records\` DROP FOREIGN KEY \`FK_dental_medical_records_patient\``,
+    );
+    await queryRunner.query(
+      `ALTER TABLE \`dental_appointments\` DROP FOREIGN KEY \`FK_dental_appointments_patient\``,
+    );
 
     // 删除表
     await queryRunner.query(`DROP TABLE \`dental_followups\``);
@@ -132,4 +142,4 @@ export class CreateDentalModuleTables1744700000000 implements MigrationInterface
     await queryRunner.query(`DROP TABLE \`dental_appointments\``);
     await queryRunner.query(`DROP TABLE \`dental_patients\``);
   }
-} 
+}

@@ -72,7 +72,10 @@ export class CreateMedicalRecordDto {
   @IsNumber({}, { message: '治疗费用必须是数字' })
   cost?: number;
 
-  @ApiProperty({ description: '状态：active-活跃，completed-完成', required: false })
+  @ApiProperty({
+    description: '状态：active-活跃，completed-完成',
+    required: false,
+  })
   @IsOptional()
   @IsString({ message: '状态必须是 active 或 completed' })
   status?: string = 'active';
@@ -132,7 +135,10 @@ export class UpdateMedicalRecordDto {
   @IsOptional()
   cost?: number;
 
-  @ApiProperty({ description: '状态：active-活跃，completed-完成', required: false })
+  @ApiProperty({
+    description: '状态：active-活跃，completed-完成',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   status?: string;
@@ -156,7 +162,7 @@ export class MedicalRecordQueryDto {
   @IsNumber()
   @IsOptional()
   limit?: number;
-  
+
   @ApiProperty({ description: '状态过滤', required: false })
   @IsString()
   @IsOptional()

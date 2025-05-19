@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class ForceFixInventoryColumns1744891000000 implements MigrationInterface {
+export class ForceFixInventoryColumns1744891000000
+  implements MigrationInterface
+{
   name = 'ForceFixInventoryColumns1744891000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -8,7 +10,10 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
 
     try {
       // 1. 先确认是否已经存在要修复的表
-      const tableExists = await this.checkTableExists(queryRunner, 'dental_inventory');
+      const tableExists = await this.checkTableExists(
+        queryRunner,
+        'dental_inventory',
+      );
 
       if (!tableExists) {
         // 如果表不存在，创建表
@@ -19,12 +24,18 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
       }
 
       // 同理检查并处理其他表
-      const inRecordTableExists = await this.checkTableExists(queryRunner, 'dental_inventory_in_record');
+      const inRecordTableExists = await this.checkTableExists(
+        queryRunner,
+        'dental_inventory_in_record',
+      );
       if (!inRecordTableExists) {
         await this.createInventoryInRecordTable(queryRunner);
       }
 
-      const outRecordTableExists = await this.checkTableExists(queryRunner, 'dental_inventory_out_record');
+      const outRecordTableExists = await this.checkTableExists(
+        queryRunner,
+        'dental_inventory_out_record',
+      );
       if (!outRecordTableExists) {
         await this.createInventoryOutRecordTable(queryRunner);
       }
@@ -40,12 +51,15 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
     console.log('由于是数据修复迁移，没有执行回滚操作');
   }
 
-  private async checkTableExists(queryRunner: QueryRunner, tableName: string): Promise<boolean> {
+  private async checkTableExists(
+    queryRunner: QueryRunner,
+    tableName: string,
+  ): Promise<boolean> {
     try {
       const result = await queryRunner.query(
         `SELECT COUNT(*) as count FROM information_schema.tables 
          WHERE table_schema = DATABASE() 
-         AND table_name = '${tableName}'`
+         AND table_name = '${tableName}'`,
       );
       return result[0].count > 0;
     } catch (error) {
@@ -91,17 +105,33 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
       console.log('检查库存表列结构...');
 
       // 1. 检查并修复 current_quantity 列
-      if (!(await this.columnExists(queryRunner, 'dental_inventory', 'current_quantity'))) {
+      if (
+        !(await this.columnExists(
+          queryRunner,
+          'dental_inventory',
+          'current_quantity',
+        ))
+      ) {
         console.log('需要创建 current_quantity 列');
-        
+
         // 先检查是否有 currentQuantity 列（驼峰命名）
-        if (await this.columnExists(queryRunner, 'dental_inventory', 'currentQuantity')) {
+        if (
+          await this.columnExists(
+            queryRunner,
+            'dental_inventory',
+            'currentQuantity',
+          )
+        ) {
           // 重命名列
-          await queryRunner.query(`ALTER TABLE dental_inventory CHANGE currentQuantity current_quantity INT NOT NULL DEFAULT 0`);
+          await queryRunner.query(
+            `ALTER TABLE dental_inventory CHANGE currentQuantity current_quantity INT NOT NULL DEFAULT 0`,
+          );
           console.log('✅ 将 currentQuantity 列重命名为 current_quantity');
         } else {
           // 创建列
-          await queryRunner.query(`ALTER TABLE dental_inventory ADD current_quantity INT NOT NULL DEFAULT 0 COMMENT '当前库存数量'`);
+          await queryRunner.query(
+            `ALTER TABLE dental_inventory ADD current_quantity INT NOT NULL DEFAULT 0 COMMENT '当前库存数量'`,
+          );
           console.log('✅ 创建 current_quantity 列');
         }
       } else {
@@ -109,17 +139,33 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
       }
 
       // 2. 检查并修复 safety_quantity 列
-      if (!(await this.columnExists(queryRunner, 'dental_inventory', 'safety_quantity'))) {
+      if (
+        !(await this.columnExists(
+          queryRunner,
+          'dental_inventory',
+          'safety_quantity',
+        ))
+      ) {
         console.log('需要创建 safety_quantity 列');
-        
+
         // 先检查是否有 safetyQuantity 列（驼峰命名）
-        if (await this.columnExists(queryRunner, 'dental_inventory', 'safetyQuantity')) {
+        if (
+          await this.columnExists(
+            queryRunner,
+            'dental_inventory',
+            'safetyQuantity',
+          )
+        ) {
           // 重命名列
-          await queryRunner.query(`ALTER TABLE dental_inventory CHANGE safetyQuantity safety_quantity INT NOT NULL DEFAULT 0`);
+          await queryRunner.query(
+            `ALTER TABLE dental_inventory CHANGE safetyQuantity safety_quantity INT NOT NULL DEFAULT 0`,
+          );
           console.log('✅ 将 safetyQuantity 列重命名为 safety_quantity');
         } else {
           // 创建列
-          await queryRunner.query(`ALTER TABLE dental_inventory ADD safety_quantity INT NOT NULL DEFAULT 0 COMMENT '安全库存量'`);
+          await queryRunner.query(
+            `ALTER TABLE dental_inventory ADD safety_quantity INT NOT NULL DEFAULT 0 COMMENT '安全库存量'`,
+          );
           console.log('✅ 创建 safety_quantity 列');
         }
       } else {
@@ -128,14 +174,32 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
 
       // 3. 检查并修复时间相关列
       const timeColumns = [
-        { name: 'created_at', definition: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间"' },
-        { name: 'updated_at', definition: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT "更新时间"' },
-        { name: 'delete_time', definition: 'TIMESTAMP NULL COMMENT "删除时间"' }
+        {
+          name: 'created_at',
+          definition: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT "创建时间"',
+        },
+        {
+          name: 'updated_at',
+          definition:
+            'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT "更新时间"',
+        },
+        {
+          name: 'delete_time',
+          definition: 'TIMESTAMP NULL COMMENT "删除时间"',
+        },
       ];
 
       for (const column of timeColumns) {
-        if (!(await this.columnExists(queryRunner, 'dental_inventory', column.name))) {
-          await queryRunner.query(`ALTER TABLE dental_inventory ADD ${column.name} ${column.definition}`);
+        if (
+          !(await this.columnExists(
+            queryRunner,
+            'dental_inventory',
+            column.name,
+          ))
+        ) {
+          await queryRunner.query(
+            `ALTER TABLE dental_inventory ADD ${column.name} ${column.definition}`,
+          );
           console.log(`✅ 创建 ${column.name} 列`);
         } else {
           console.log(`${column.name} 列已存在`);
@@ -149,7 +213,9 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
     }
   }
 
-  private async createInventoryInRecordTable(queryRunner: QueryRunner): Promise<void> {
+  private async createInventoryInRecordTable(
+    queryRunner: QueryRunner,
+  ): Promise<void> {
     try {
       console.log('创建入库记录表...');
 
@@ -181,7 +247,9 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
     }
   }
 
-  private async createInventoryOutRecordTable(queryRunner: QueryRunner): Promise<void> {
+  private async createInventoryOutRecordTable(
+    queryRunner: QueryRunner,
+  ): Promise<void> {
     try {
       console.log('创建出库记录表...');
 
@@ -211,14 +279,18 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
     }
   }
 
-  private async columnExists(queryRunner: QueryRunner, table: string, column: string): Promise<boolean> {
+  private async columnExists(
+    queryRunner: QueryRunner,
+    table: string,
+    column: string,
+  ): Promise<boolean> {
     try {
       const result = await queryRunner.query(
         `SELECT COUNT(*) as count
          FROM information_schema.columns
          WHERE table_schema = DATABASE()
          AND table_name = '${table}'
-         AND column_name = '${column}'`
+         AND column_name = '${column}'`,
       );
       return result[0].count > 0;
     } catch (error) {
@@ -226,4 +298,4 @@ export class ForceFixInventoryColumns1744891000000 implements MigrationInterface
       return false;
     }
   }
-} 
+}

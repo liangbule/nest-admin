@@ -19,10 +19,26 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DentalService } from './dental.service';
-import { CreatePatientDto, UpdatePatientDto, PatientQueryDto } from './dto/patient.dto';
-import { CreateAppointmentDto, UpdateAppointmentDto, AppointmentQueryDto } from './dto/appointment.dto';
-import { CreateMedicalRecordDto, UpdateMedicalRecordDto, MedicalRecordQueryDto } from './dto/medical-record.dto';
-import { CreateFollowupDto, UpdateFollowupDto, FollowupQueryDto } from './dto/followup.dto';
+import {
+  CreatePatientDto,
+  UpdatePatientDto,
+  PatientQueryDto,
+} from './patient/dto/patient.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  AppointmentQueryDto,
+} from './appointment/dto/appointment.dto';
+import {
+  CreateMedicalRecordDto,
+  UpdateMedicalRecordDto,
+  MedicalRecordQueryDto,
+} from './dto/medical-record.dto';
+import {
+  CreateFollowupDto,
+  UpdateFollowupDto,
+  FollowupQueryDto,
+} from './dto/followup.dto';
 
 /**
  * 牙科诊所管理控制器
@@ -36,7 +52,10 @@ export class DentalController {
 
   /* 患者管理API */
   @ApiTags('牙科诊所管理', '患者管理')
-  @ApiOperation({ summary: '获取患者列表', description: '获取患者列表，支持分页、筛选' })
+  @ApiOperation({
+    summary: '获取患者列表',
+    description: '获取患者列表，支持分页、筛选',
+  })
   @ApiResponse({ status: 200, description: '成功返回患者列表' })
   @Get('patients')
   async getPatients(@Query() query: PatientQueryDto) {
@@ -65,7 +84,10 @@ export class DentalController {
   @ApiResponse({ status: 200, description: '成功更新患者信息' })
   @ApiResponse({ status: 404, description: '患者不存在' })
   @Put('patients/:id')
-  async updatePatient(@Param('id') id: string, @Body() patientData: UpdatePatientDto) {
+  async updatePatient(
+    @Param('id') id: string,
+    @Body() patientData: UpdatePatientDto,
+  ) {
     return this.dentalService.updatePatient(id, patientData);
   }
 
@@ -80,7 +102,10 @@ export class DentalController {
 
   /* 预约管理API */
   @ApiTags('牙科诊所管理', '预约管理')
-  @ApiOperation({ summary: '获取预约列表', description: '获取预约列表，支持分页、筛选' })
+  @ApiOperation({
+    summary: '获取预约列表',
+    description: '获取预约列表，支持分页、筛选',
+  })
   @ApiResponse({ status: 200, description: '成功返回预约列表' })
   @Get('appointments')
   async getAppointments(@Query() query: AppointmentQueryDto) {
@@ -108,7 +133,10 @@ export class DentalController {
   @ApiResponse({ status: 200, description: '成功更新预约信息' })
   @ApiResponse({ status: 404, description: '预约不存在' })
   @Put('appointments/:id')
-  async updateAppointment(@Param('id') id: string, @Body() appointmentData: UpdateAppointmentDto) {
+  async updateAppointment(
+    @Param('id') id: string,
+    @Body() appointmentData: UpdateAppointmentDto,
+  ) {
     return this.dentalService.updateAppointment(id, appointmentData);
   }
 
@@ -123,7 +151,10 @@ export class DentalController {
 
   /* 病历记录API */
   @ApiTags('牙科诊所管理', '病历管理')
-  @ApiOperation({ summary: '获取患者病历', description: '获取指定患者的病历记录，支持分页' })
+  @ApiOperation({
+    summary: '获取患者病历',
+    description: '获取指定患者的病历记录，支持分页',
+  })
   @ApiResponse({ status: 200, description: '成功返回病历列表' })
   @Get('patients/:patientId/records')
   async getMedicalRecords(
@@ -149,7 +180,10 @@ export class DentalController {
   @ApiResponse({ status: 200, description: '成功更新病历信息' })
   @ApiResponse({ status: 404, description: '病历不存在' })
   @Put('records/:id')
-  async updateMedicalRecord(@Param('id') id: string, @Body() recordData: UpdateMedicalRecordDto) {
+  async updateMedicalRecord(
+    @Param('id') id: string,
+    @Body() recordData: UpdateMedicalRecordDto,
+  ) {
     return this.dentalService.updateMedicalRecord(id, recordData);
   }
 
@@ -164,7 +198,10 @@ export class DentalController {
 
   /* 复诊记录API */
   @ApiTags('牙科诊所管理', '随访管理')
-  @ApiOperation({ summary: '获取患者随访记录', description: '获取指定患者的随访记录，支持分页' })
+  @ApiOperation({
+    summary: '获取患者随访记录',
+    description: '获取指定患者的随访记录，支持分页',
+  })
   @ApiResponse({ status: 200, description: '成功返回随访记录列表' })
   @Get('patients/:patientId/followups')
   async getFollowups(
@@ -175,7 +212,10 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '随访管理')
-  @ApiOperation({ summary: '创建随访记录', description: '为指定患者创建随访记录' })
+  @ApiOperation({
+    summary: '创建随访记录',
+    description: '为指定患者创建随访记录',
+  })
   @ApiResponse({ status: 201, description: '成功创建随访记录' })
   @Post('patients/:patientId/followups')
   async createFollowup(
@@ -186,11 +226,17 @@ export class DentalController {
   }
 
   @ApiTags('牙科诊所管理', '随访管理')
-  @ApiOperation({ summary: '更新随访记录', description: '根据ID更新随访记录信息' })
+  @ApiOperation({
+    summary: '更新随访记录',
+    description: '根据ID更新随访记录信息',
+  })
   @ApiResponse({ status: 200, description: '成功更新随访记录信息' })
   @ApiResponse({ status: 404, description: '随访记录不存在' })
   @Put('followups/:id')
-  async updateFollowup(@Param('id') id: string, @Body() followupData: UpdateFollowupDto) {
+  async updateFollowup(
+    @Param('id') id: string,
+    @Body() followupData: UpdateFollowupDto,
+  ) {
     return this.dentalService.updateFollowup(id, followupData);
   }
 

@@ -19,9 +19,9 @@ export class SeedAdminUser1744655277874 implements MigrationInterface {
 
       // Insert test user
       await queryRunner.query(
-        `INSERT INTO users (username, email, password, status) 
-                VALUES (?, ?, ?, ?)`,
-        ['testuser', 'test@example.com', hashedPassword, 1],
+        `INSERT INTO users (username, email, password, is_admin, status) 
+                VALUES (?, ?, ?, ?, ?)`,
+        ['testuser', 'test@example.com', hashedPassword, true, 'active'],
       );
 
       console.log('Test user created successfully!');

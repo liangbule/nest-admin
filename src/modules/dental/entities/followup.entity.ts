@@ -9,7 +9,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Patient } from './patient.entity';
+import { Patient } from '../patient/entities/patient.entity';
 import { MedicalRecord } from './medical-record.entity';
 
 /**

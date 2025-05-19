@@ -26,7 +26,9 @@ async function bootstrap() {
   // Swagger 配置
   const config = new DocumentBuilder()
     .setTitle('牙科诊所管理系统API')
-    .setDescription('牙科诊所管理系统API文档，包含患者管理、预约管理、病历管理和随访管理等功能')
+    .setDescription(
+      '牙科诊所管理系统API文档，包含患者管理、预约管理、病历管理和随访管理等功能',
+    )
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('牙科诊所管理', '牙科诊所管理系统的所有API')
