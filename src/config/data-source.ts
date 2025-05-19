@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 
 /**
  * TypeORM数据源配置

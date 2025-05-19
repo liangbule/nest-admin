@@ -12,7 +12,7 @@ export const getDatabaseConfig = (
   configService: ConfigService,
 ): TypeOrmModuleOptions => {
   const isDevelopment = configService.get<string>('NODE_ENV') !== 'production';
-  
+
   return {
     type: 'mysql',
     host: configService.get<string>('DB_HOST', 'localhost'),
@@ -22,7 +22,8 @@ export const getDatabaseConfig = (
     database: configService.get<string>('DB_DATABASE', 'my_nest_admin'),
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     // 开发环境下启用synchronize以自动更新表结构
-    synchronize: isDevelopment && configService.get<boolean>('DB_SYNCHRONIZE', false),
+    synchronize:
+      isDevelopment && configService.get<boolean>('DB_SYNCHRONIZE', false),
     logging: configService.get<boolean>('DB_LOGGING', true),
     dropSchema: false,
     migrationsRun: true,
