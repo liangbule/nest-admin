@@ -44,8 +44,11 @@ export class LinkController {
     type: PaginationResponseDto,
   })
   findAll(
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: PaginationDto = new PaginationDto(),
   ): Promise<PaginationResponseDto<Link>> {
+    // 确保参数始终为数字
+    if (!paginationDto.page) paginationDto.page = 1;
+    if (!paginationDto.limit) paginationDto.limit = 10;
     return this.linkService.findAll(paginationDto);
   }
 
@@ -59,8 +62,11 @@ export class LinkController {
     type: PaginationResponseDto,
   })
   findAllAdmin(
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: PaginationDto = new PaginationDto(),
   ): Promise<PaginationResponseDto<Link>> {
+    // 确保参数始终为数字
+    if (!paginationDto.page) paginationDto.page = 1;
+    if (!paginationDto.limit) paginationDto.limit = 10;
     return this.linkService.findAllAdmin(paginationDto);
   }
 
@@ -110,8 +116,11 @@ export class LinkController {
   })
   findByCategory(
     @Param('categoryId') categoryId: string,
-    @Query() paginationDto: PaginationDto,
+    @Query() paginationDto: PaginationDto = new PaginationDto(),
   ): Promise<PaginationResponseDto<Link>> {
+    // 确保参数始终为数字
+    if (!paginationDto.page) paginationDto.page = 1;
+    if (!paginationDto.limit) paginationDto.limit = 10;
     return this.linkService.findByCategory(+categoryId, paginationDto);
   }
 }

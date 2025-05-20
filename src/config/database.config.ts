@@ -22,11 +22,10 @@ export const getDatabaseConfig = (
     database: configService.get<string>('DB_DATABASE', 'my_nest_admin'),
     entities: [__dirname + '/../**/*.entity{.ts,.js}'],
     // 开发环境下启用synchronize以自动更新表结构
-    synchronize:
-      isDevelopment && configService.get<boolean>('DB_SYNCHRONIZE', false),
+    synchronize: false,
     logging: configService.get<boolean>('DB_LOGGING', true),
     dropSchema: false,
-    migrationsRun: true,
+    migrationsRun: false,
     migrations: [__dirname + '/../migrations/*{.ts,.js}'],
     autoLoadEntities: true,
   };

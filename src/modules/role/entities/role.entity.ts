@@ -31,10 +31,10 @@ export class Role {
   users: User[];
 
   @ApiProperty({ description: '创建时间' })
-  @CreateDateColumn({ name: 'create_time' })
+  @CreateDateColumn()
   createTime: Date;
 
   @ApiProperty({ description: '更新时间' })
-  @UpdateDateColumn({ name: 'update_time' })
+  @UpdateDateColumn()
   updateTime: Date;
 }

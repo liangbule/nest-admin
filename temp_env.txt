@@ -1,0 +1,22 @@
+# App
+NODE_ENV=development
+APP_NAME=my-nest-admin
+PORT=3000
+API_PREFIX=api
+
+# Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=root
+DB_DATABASE=my_nest_admin
+DB_SYNCHRONIZE=false
+DB_LOGGING=true
+
+# JWT
+JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=7d
+
+# API相关
+app.jwtSecret=your_jwt_secret_key
+app.jwtExpiresIn=1d 

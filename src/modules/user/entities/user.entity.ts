@@ -8,6 +8,7 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  Index,
 } from 'typeorm';
 import { Role } from '../../role/entities/role.entity';
 
@@ -36,7 +37,8 @@ export class User {
   password: string;
 
   @ApiProperty({ description: '邮箱' })
-  @Column({ unique: true, nullable: true })
+  @Column({ nullable: true })
+  @Index({ unique: true, where: 'email IS NOT NULL' })
   email: string;
 
   @ApiProperty({ description: '头像' })
@@ -48,7 +50,10 @@ export class User {
   status: number;
 
   @ApiProperty({ description: '角色列表', type: [Role] })
-  @ManyToMany(() => Role, { eager: true })
+  @ManyToMany(() => Role, (role) => role.users, {
+    eager: true,
+    createForeignKeyConstraints: false,
+  })
   @JoinTable({
     name: 'user_roles',
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },

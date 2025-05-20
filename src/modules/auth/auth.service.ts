@@ -1,9 +1,16 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  Logger,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import * as bcrypt from 'bcrypt';
-import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { User } from '../user/entities/user.entity';
+import { Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 /**
  * 认证服务
@@ -18,6 +25,8 @@ export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async validateUser(username: string, password: string): Promise<any> {
@@ -65,10 +74,26 @@ export class AuthService {
 
   async register(registerDto: RegisterDto) {
     try {
+      // 检查邮箱是否已被使用
+      const existingEmailUser = await this.userRepository.findOne({
+        where: { email: registerDto.email },
+      });
+      if (existingEmailUser) {
+        throw new ConflictException('邮箱已被绑定');
+      }
+
+      // 检查用户名是否已被使用
+      const existingUsernameUser = await this.userRepository.findOne({
+        where: { username: registerDto.username },
+      });
+      if (existingUsernameUser) {
+        throw new ConflictException('用户名已被使用');
+      }
+
       // 创建新用户
       const user = await this.userService.create({
         ...registerDto,
-        roleIds: registerDto.roleIds || [], // 使用传入的角色ID列表，如果没有则默认为空数组
+        roleIds: registerDto.roleIds || [],
       });
 
       this.logger.log(`用户注册成功: ${user.username}`);

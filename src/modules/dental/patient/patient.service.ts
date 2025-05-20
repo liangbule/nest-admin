@@ -39,7 +39,7 @@ export class PatientService {
     queryBuilder.skip(skip).take(limit);
 
     // 排序
-    queryBuilder.orderBy('patient.createdAt', 'DESC');
+    queryBuilder.orderBy('patient.createTime', 'DESC');
 
     // 执行查询
     const patients = await queryBuilder.getMany();
